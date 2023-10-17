@@ -1,0 +1,3 @@
+[submodule "v-hacd"]
+	path = v-hacd
+	url = git@github.com:gormlai/v-hacd.git
