@@ -8,11 +8,13 @@
 extern "C" {
   void printNumber(int num);
   // return handle
-  int64_t convexDecomposition(const float * vertices, const uint32_t * indices, const unsigned int numVertices, const unsigned int numIndices);
-  int numConvexHulls(int64_t handle);
-  int numTriangles(int64_t handle, int convexHullIndex);
-  int numVertices(int64_t handle, int convexHullIndex);
-  void freeHandle(int64_t handle);
+  uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, const unsigned int numVertices, const unsigned int numIndices);
+  void freeHandle(uint64_t handle);
+  void getTriangles(uint64_t handle, const uint32_t * indices);
+  void getVertices(uint64_t handle, const double * vertices);
+  uint numConvexHulls(uint64_t handle);
+  uint numTriangles(uint64_t handle, int convexHullIndex);
+  uint numVertices(uint64_t handle, int convexHullIndex);  
 }
 
 
@@ -26,7 +28,7 @@ void printNumber(int num) {
   printf("num is %s\n", numS.c_str());
 }
 
-int64_t convexDecomposition(const float * vertices, const uint32_t * indices, const unsigned int numVertices, const unsigned int numIndices) {
+uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, const unsigned int numVertices, const unsigned int numIndices) {
   VHACD::IVHACD * cDecomposer = VHACD::CreateVHACD();
   assert(cDecomposer != nullptr);
 
@@ -45,7 +47,7 @@ int64_t convexDecomposition(const float * vertices, const uint32_t * indices, co
       cDecomposer->GetConvexHull(convexHullIndex, convexHull);
     }
 
-    return reinterpret_cast<int64_t>(cDecomposer);
+    return reinterpret_cast<uint64_t>(cDecomposer);
     //   return numConvexHulls;    
   }
   else {
@@ -55,7 +57,7 @@ int64_t convexDecomposition(const float * vertices, const uint32_t * indices, co
 
 }
 
-void freeHandle(int64_t handle) {
+void freeHandle(uint64_t handle) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
@@ -65,20 +67,27 @@ void freeHandle(int64_t handle) {
   cDecomposer->Release();
 }
 
-int numConvexHulls(int64_t handle) {
+void getTriangles(uint64_t handle, const uint32_t * indices) {
+}
+
+void getVertices(uint64_t handle, const double * vertices) {
+}
+
+
+uint numConvexHulls(uint64_t handle) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
     return 0;
   }  
 
-  const int numConvexHulls = cDecomposer->GetNConvexHulls();
+  const uint numConvexHulls = cDecomposer->GetNConvexHulls();
   return numConvexHulls; 
   
 }
 
 
-int numTriangles(int64_t handle, int convexHullIndex) {
+uint numTriangles(uint64_t handle, int convexHullIndex) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
@@ -89,10 +98,10 @@ int numTriangles(int64_t handle, int convexHullIndex) {
   assert(convexHullIndex < vec.size());
 
   VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
-  return (int)cHull.m_triangles.size();  
+  return (uint)cHull.m_triangles.size();  
 }
 
-int numVertices(int64_t handle, int convexHullIndex) {
+uint numVertices(uint64_t handle, int convexHullIndex) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
@@ -103,5 +112,6 @@ int numVertices(int64_t handle, int convexHullIndex) {
   assert(convexHullIndex < vec.size());
 
   VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
-  return (int)cHull.m_points.size();    
+  return (uint)cHull.m_points.size();    
 }
+
