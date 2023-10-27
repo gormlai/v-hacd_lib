@@ -10,11 +10,11 @@ extern "C" {
   // return handle
   uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, const unsigned int numVertices, const unsigned int numIndices);
   void freeHandle(uint64_t handle);
-  void getTriangles(uint64_t handle, const uint32_t * indices);
-  void getVertices(uint64_t handle, const double * vertices);
+  void getTriangles(uint64_t handle, uint convexHullIndex, uint32_t * indices);
+  void getVertices(uint64_t handle, uint convexHullIndex, double * vertices);
   uint numConvexHulls(uint64_t handle);
-  uint numTriangles(uint64_t handle, int convexHullIndex);
-  uint numVertices(uint64_t handle, int convexHullIndex);  
+  uint numTriangles(uint64_t handle, uint convexHullIndex);
+  uint numVertices(uint64_t handle, uint convexHullIndex);  
 }
 
 
@@ -64,13 +64,36 @@ void freeHandle(uint64_t handle) {
     return;
   }  
 
+  g_convexHullMap.erase(it);
   cDecomposer->Release();
 }
 
-void getTriangles(uint64_t handle, const uint32_t * indices) {
+void getTriangles(uint64_t handle, uint convexHullIndex, uint32_t * indices) {
+  VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
+  auto it = g_convexHullMap.find(cDecomposer);
+  if(it == g_convexHullMap.end()) {
+    return;
+  }
+
+  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  assert(convexHullIndex < vec.size());
+
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  memcpy(indices, &cHull.m_triangles[0], sizeof(uint32_t)*cHull.m_triangles.size()*3);
 }
 
-void getVertices(uint64_t handle, const double * vertices) {
+void getVertices(uint64_t handle, uint convexHullIndex, double * vertices) {
+  VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
+  auto it = g_convexHullMap.find(cDecomposer);
+  if(it == g_convexHullMap.end()) {
+    return;
+  }
+
+  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  assert(convexHullIndex < vec.size());
+
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  memcpy(vertices, &cHull.m_points[0], sizeof(double)*cHull.m_points.size());
 }
 
 
@@ -87,7 +110,7 @@ uint numConvexHulls(uint64_t handle) {
 }
 
 
-uint numTriangles(uint64_t handle, int convexHullIndex) {
+uint numTriangles(uint64_t handle, uint convexHullIndex) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
@@ -101,7 +124,7 @@ uint numTriangles(uint64_t handle, int convexHullIndex) {
   return (uint)cHull.m_triangles.size();  
 }
 
-uint numVertices(uint64_t handle, int convexHullIndex) {
+uint numVertices(uint64_t handle, uint convexHullIndex) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
   if(it == g_convexHullMap.end()) {
