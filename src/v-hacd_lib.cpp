@@ -94,7 +94,7 @@ void getVertices(uint64_t handle, uint convexHullIndex, double * vertices) {
   assert(convexHullIndex < vec.size());
 
   VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
-  memcpy(vertices, &cHull.m_points[0], sizeof(double)*cHull.m_points.size());
+  memcpy(vertices, &cHull.m_points[0], sizeof(double)*cHull.m_points.size() * 3);
 }
 
 
