@@ -42,13 +42,14 @@ uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, c
   if(decomposeResult) {
     const int numConvexHulls = cDecomposer->GetNConvexHulls();
 
+    std::vector<VHACD::IVHACD::ConvexHull> hulls(numConvexHulls);
     for(int convexHullIndex = 0 ; convexHullIndex < numConvexHulls ; convexHullIndex++) {
-      VHACD::IVHACD::ConvexHull convexHull;
-      cDecomposer->GetConvexHull(convexHullIndex, convexHull);
+      cDecomposer->GetConvexHull(convexHullIndex, hulls[convexHullIndex]);
     }
 
+    g_convexHullMap[cDecomposer] = hulls;
+
     return reinterpret_cast<uint64_t>(cDecomposer);
-    //   return numConvexHulls;    
   }
   else {
     printf("Failed to calculate convex hull\n");
