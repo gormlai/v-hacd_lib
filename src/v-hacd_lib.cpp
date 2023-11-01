@@ -37,7 +37,14 @@ uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, c
   for(unsigned int vertexIndex = 0 ; vertexIndex < (numVertices*3) ; vertexIndex++) {
     dVertices[vertexIndex] = vertices[vertexIndex];
   }
-  VHACD::IVHACD::Parameters parameters;
+  
+  VHACD::IVHACD::Parameters parameters = {};
+  parameters.m_maxConvexHulls = 64;
+  parameters.m_resolution = 100 * 100 * 100;
+  parameters.m_minimumVolumePercentErrorAllowed = 25;
+  parameters.m_maxRecursionDepth = 5;
+
+  
   const bool decomposeResult = cDecomposer->Compute(dVertices, numVertices, indices, numIndices / 3, parameters);
   if(decomposeResult) {
     const int numConvexHulls = cDecomposer->GetNConvexHulls();
