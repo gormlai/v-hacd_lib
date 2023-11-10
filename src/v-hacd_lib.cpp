@@ -93,7 +93,7 @@ float getVolume(uint64_t handle, uint convexHullIndex) {
   assert(convexHullIndex < vec.size());
 
   VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
-  return (uint)cHull.m_volume;
+  return (float)cHull.m_volume;
 }
 
 
