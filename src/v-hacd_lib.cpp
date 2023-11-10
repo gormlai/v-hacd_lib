@@ -14,13 +14,19 @@ extern "C" {
   void getVertices(uint64_t handle, uint convexHullIndex, double * vertices);
   uint numConvexHulls(uint64_t handle);
   uint numTriangles(uint64_t handle, uint convexHullIndex);
-  uint numVertices(uint64_t handle, uint convexHullIndex);  
+  uint numVertices(uint64_t handle, uint convexHullIndex);
+  float getVolume(uint64_t handle, uint convexHullIndex);
 }
 
+struct ConvexHullDescriptor {
+  VHACD::IVHACD::ConvexHull convexHull;
+  VHACD::BoundsAABB bounds;
+  std::vector<int> neighbours;
+};
 
 namespace {
-  typedef std::vector<VHACD::IVHACD::ConvexHull> ConvexHullVector;
-  std::map<VHACD::IVHACD *, ConvexHullVector> g_convexHullMap;
+  typedef std::vector<ConvexHullDescriptor> ConvexHullDescVector;
+  std::map<VHACD::IVHACD *, ConvexHullDescVector> g_convexHullMap;
 }
 
 void printNumber(int num) {
@@ -49,9 +55,9 @@ uint64_t convexDecomposition(const float * vertices, const uint32_t * indices, c
   if(decomposeResult) {
     const int numConvexHulls = cDecomposer->GetNConvexHulls();
 
-    std::vector<VHACD::IVHACD::ConvexHull> hulls(numConvexHulls);
+    std::vector<ConvexHullDescriptor> hulls(numConvexHulls);
     for(int convexHullIndex = 0 ; convexHullIndex < numConvexHulls ; convexHullIndex++) {
-      cDecomposer->GetConvexHull(convexHullIndex, hulls[convexHullIndex]);
+      cDecomposer->GetConvexHull(convexHullIndex, hulls[convexHullIndex].convexHull);
     }
 
     g_convexHullMap[cDecomposer] = hulls;
@@ -76,6 +82,21 @@ void freeHandle(uint64_t handle) {
   cDecomposer->Release();
 }
 
+float getVolume(uint64_t handle, uint convexHullIndex) {
+  VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
+  auto it = g_convexHullMap.find(cDecomposer);
+  if(it == g_convexHullMap.end()) {
+    return 0;
+  }
+
+  std::vector<ConvexHullDescriptor> & vec = it->second;
+  assert(convexHullIndex < vec.size());
+
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
+  return (uint)cHull.m_volume;
+}
+
+
 void getTriangles(uint64_t handle, uint convexHullIndex, uint32_t * indices) {
   VHACD::IVHACD * cDecomposer = reinterpret_cast<VHACD::IVHACD *>(handle);
   auto it = g_convexHullMap.find(cDecomposer);
@@ -83,10 +104,10 @@ void getTriangles(uint64_t handle, uint convexHullIndex, uint32_t * indices) {
     return;
   }
 
-  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  std::vector<ConvexHullDescriptor> & vec = it->second;
   assert(convexHullIndex < vec.size());
 
-  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
   memcpy(indices, &cHull.m_triangles[0], sizeof(uint32_t)*cHull.m_triangles.size()*3);
 }
 
@@ -97,10 +118,10 @@ void getVertices(uint64_t handle, uint convexHullIndex, double * vertices) {
     return;
   }
 
-  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  std::vector<ConvexHullDescriptor> & vec = it->second;
   assert(convexHullIndex < vec.size());
 
-  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
   memcpy(vertices, &cHull.m_points[0], sizeof(double)*cHull.m_points.size() * 3);
 }
 
@@ -125,10 +146,10 @@ uint numTriangles(uint64_t handle, uint convexHullIndex) {
     return 0;
   }
 
-  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  std::vector<ConvexHullDescriptor> & vec = it->second;
   assert(convexHullIndex < vec.size());
 
-  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
   return (uint)cHull.m_triangles.size();  
 }
 
@@ -139,10 +160,10 @@ uint numVertices(uint64_t handle, uint convexHullIndex) {
     return 0;
   }
 
-  std::vector<VHACD::IVHACD::ConvexHull> & vec = it->second;
+  std::vector<ConvexHullDescriptor> & vec = it->second;
   assert(convexHullIndex < vec.size());
 
-  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex];
+  VHACD::IVHACD::ConvexHull & cHull = vec[convexHullIndex].convexHull;
   return (uint)cHull.m_points.size();    
 }
 
