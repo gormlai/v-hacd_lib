@@ -16,6 +16,8 @@ message(STATUS ${PROJECT_NAME})
 message(STATUS ${VHACD_INCLUDE_DIR})
 message(STATUS ${SOURCES})
 
+add_compile_options(-Wl,--no-undefined)
+
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${VHACD_INCLUDE_DIR})
 
